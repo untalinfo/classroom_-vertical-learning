@@ -1,0 +1,5 @@
+{
+  "name": "Classroom: Vertical Learning",
+  "description": "A mobile-first learning management system inspired by Instagram Stories and YouTube Shorts, featuring a 100% vertical-only navigation flow. Users swipe through full-screen content cards, including text, videos, PDFs, and exams, with features like bookmarking, note-taking, and progress tracking.",
+  "requestFramePermissions": []
+}
