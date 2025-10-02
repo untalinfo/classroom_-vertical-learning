@@ -85,7 +85,7 @@ const MOCK_COURSES: Course[] = [
             correctAnswer: 'Character',
             bookmarked: false,
           },
-           {
+          {
             id: 'c1-m1-e2',
             type: CardType.Exam,
             examType: ExamType.TrueFalse,
@@ -147,7 +147,7 @@ const MOCK_COURSES: Course[] = [
         id: 'module-2-1',
         title: 'Understanding SEO',
         cards: [
-           {
+          {
             id: 'c2-m1-i1',
             type: CardType.Image,
             url: 'https://picsum.photos/seed/marketing/1080/1920',
@@ -165,6 +165,27 @@ const MOCK_COURSES: Course[] = [
     ]
   }
 ];
+
+// Add a sample course backed by the local PDF in public/assets
+MOCK_COURSES.push({
+  id: 'course-3',
+  title: 'React Práctico (PDF)',
+  description: 'Curso basado en el PDF react-practico.pdf',
+  modules: [
+    {
+      id: 'module-3-1',
+      title: 'React Práctico (PDF) - Pages',
+      cards: [
+        // We add a few initial page cards; the viewer will show correct total when the PDF is loaded
+        { id: 'rpdf-p1', type: CardType.PdfPage, url: '/assets/react-practico.pdf', pageNumber: 1, bookmarked: false },
+        { id: 'rpdf-p2', type: CardType.PdfPage, url: '/assets/react-practico.pdf', pageNumber: 2, bookmarked: false },
+        { id: 'rpdf-p3', type: CardType.PdfPage, url: '/assets/react-practico.pdf', pageNumber: 3, bookmarked: false },
+        { id: 'rpdf-p4', type: CardType.PdfPage, url: '/assets/react-practico.pdf', pageNumber: 4, bookmarked: false },
+        { id: 'rpdf-p5', type: CardType.PdfPage, url: '/assets/react-practico.pdf', pageNumber: 5, bookmarked: false },
+      ],
+    },
+  ],
+});
 
 export const useCourseData = () => {
   const [courses, setCourses] = useState<Course[]>(MOCK_COURSES);

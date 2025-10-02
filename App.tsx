@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useCourseData } from './hooks/useCourseData';
+import { getDocument } from 'pdfjs-dist';
 import type { Course, Module, Card, Note, Progress } from './types';
 import CourseViewer from './components/CourseViewer';
 import BottomNavBar from './components/BottomNavBar';
@@ -79,7 +80,34 @@ const App: React.FC = () => {
       case 'courses':
         return <MyCoursesScreen 
                  courses={courses} 
-                 onSelectModule={(course, module) => {
+                 onSelectModule={async (course, module) => {
+                   const pdfPages = module.cards.filter(c => c.type === ("PDF_PAGE" as any));
+                   if (pdfPages.length > 0) {
+                     const pdfUrl = (pdfPages[0] as any).url;
+                     try {
+                       const loadingTask = getDocument(pdfUrl);
+                       const doc = await loadingTask.promise;
+                       const np = doc.numPages || 0;
+                       if (np > pdfPages.length) {
+                         const expandedModule = {
+                           ...module,
+                           cards: Array.from({ length: np }).map((_, i) => ({
+                             id: `${module.id}-pdf-${i+1}`,
+                             type: ("PDF_PAGE" as any),
+                             url: pdfUrl,
+                             pageNumber: i+1,
+                             bookmarked: false,
+                           }))
+                         } as any;
+                         setActiveCourse(course);
+                         setActiveModule(expandedModule as any);
+                         setActiveTab('home');
+                         return;
+                       }
+                     } catch (e) {
+                       // fallback to original
+                     }
+                   }
                    setActiveCourse(course);
                    setActiveModule(module);
                    setActiveTab('home');

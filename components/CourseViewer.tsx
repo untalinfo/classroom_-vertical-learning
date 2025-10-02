@@ -64,7 +64,7 @@ const CourseViewer: React.FC<CourseViewerProps> = ({ course, module, onUpdateCar
     closeNoteEditor();
   };
 
-  const renderCard = (card: Card, isActive: boolean) => {
+  const renderCard = (card: Card, isActive: boolean, isNearby: boolean) => {
     switch (card.type) {
       case CardType.Text:
         return <TextCardComponent card={card as TextCard} />;
@@ -73,7 +73,7 @@ const CourseViewer: React.FC<CourseViewerProps> = ({ course, module, onUpdateCar
       case CardType.Image:
         return <ImageCardComponent card={card as ImageCard} />;
       case CardType.PdfPage:
-        return <PdfPageCardComponent card={card as PdfPageCard} />;
+        return <PdfPageCardComponent card={card as PdfPageCard} isActive={isActive} isNearby={isNearby} />;
       case CardType.Exam:
         return <ExamCardComponent card={card as ExamCard} onAnswer={(userAnswer) => onUpdateCard({...card, userAnswer})} />;
       default:
@@ -146,17 +146,22 @@ const CourseViewer: React.FC<CourseViewerProps> = ({ course, module, onUpdateCar
         autoHeight={false}
         style={{ height: '100%' }}
       >
-        {module.cards.map((card, index) => (
-          <SwiperSlide key={card.id}>
-            <div
-              className="w-full h-full flex items-center justify-center"
-              {...(!isTouchDevice ? { onPointerUp: handlePointerUp } : {})}
-              style={{ height: '100%' }}
-            >
-              {renderCard(card, index === activeIndex)}
-            </div>
-          </SwiperSlide>
-        ))}
+        {module.cards.map((card, index) => {
+          const isActive = index === activeIndex;
+          const isNearby = Math.abs(index - activeIndex) <= 1; // prefetch neighbors
+          return (
+            <SwiperSlide key={card.id}>
+              <div
+                className="w-full h-full flex items-center justify-center"
+                {...(!isTouchDevice ? { onPointerUp: handlePointerUp } : {})}
+                style={{ height: '100%' }}
+              >
+                {/* renderCard will accept isActive boolean */}
+                {renderCard(card, isActive, isNearby)}
+              </div>
+            </SwiperSlide>
+          );
+        })}
       </Swiper>
 
       {/* Side Action Bar */}

@@ -13,7 +13,7 @@ const ImageCardComponent: React.FC<ImageCardProps> = ({ card }) => {
     <>
       <div 
         className="w-full h-full bg-black flex items-center justify-center cursor-zoom-in"
-        onClick={(e) => { e.stopPropagation(); setZoomed(true); }}
+        onDoubleClick={(e) => { e.stopPropagation(); setZoomed(true); }}
       >
         <img src={card.url} alt={card.alt} className="w-full h-full object-cover" />
       </div>
