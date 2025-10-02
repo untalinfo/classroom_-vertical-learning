@@ -6,8 +6,9 @@ import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
 // We set it at runtime to '/node_modules/pdfjs-dist/build/pdf.worker.min.js' as a fallback — Vite will serve node_modules in dev.
 if (typeof window !== 'undefined') {
   try {
+    // Prefer a worker placed at /pdf.worker.min.js (public) for production deployments
     // @ts-ignore
-    GlobalWorkerOptions.workerSrc = (window as any).__pdfWorkerSrc || '/node_modules/pdfjs-dist/build/pdf.worker.min.js';
+    GlobalWorkerOptions.workerSrc = (window as any).__pdfWorkerSrc || '/pdf.worker.min.js';
   } catch (e) {
     // ignore
   }
