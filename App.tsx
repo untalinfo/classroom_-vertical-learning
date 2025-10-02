@@ -12,7 +12,7 @@ import { BookOpenIcon } from './components/icons/Icons';
 type Tab = 'home' | 'courses' | 'progress' | 'notes';
 
 const App: React.FC = () => {
-  const { courses, updateCardInCourse } = useCourseData();
+  const { courses, updateCardInCourse, expandPdfModule } = useCourseData();
   const [activeTab, setActiveTab] = useState<Tab>('courses');
   const [activeCourse, setActiveCourse] = useState<Course | null>(null);
   const [activeModule, setActiveModule] = useState<Module | null>(null);
@@ -84,27 +84,42 @@ const App: React.FC = () => {
                    const pdfPages = module.cards.filter(c => c.type === ("PDF_PAGE" as any));
                    if (pdfPages.length > 0) {
                      const pdfUrl = (pdfPages[0] as any).url;
-                     try {
-                       const loadingTask = getDocument(pdfUrl);
-                       const doc = await loadingTask.promise;
-                       const np = doc.numPages || 0;
-                       if (np > pdfPages.length) {
-                         const expandedModule = {
-                           ...module,
-                           cards: Array.from({ length: np }).map((_, i) => ({
-                             id: `${module.id}-pdf-${i+1}`,
-                             type: ("PDF_PAGE" as any),
-                             url: pdfUrl,
-                             pageNumber: i+1,
-                             bookmarked: false,
-                           }))
-                         } as any;
-                         setActiveCourse(course);
-                         setActiveModule(expandedModule as any);
-                         setActiveTab('home');
-                         return;
-                       }
-                     } catch (e) {
+                      try {
+                        const np = await expandPdfModule(course.id, module.id, pdfUrl, { maxPages: 1000 });
+                        if (typeof np === 'number' && np > 0) {
+                          // Read the persisted courses from localStorage to get the expanded module (including appended exams)
+                          try {
+                            const raw = localStorage.getItem('vl_courses_v1');
+                            if (raw) {
+                              const parsed = JSON.parse(raw) as any[];
+                              const updatedCourse = parsed.find((c: any) => c.id === course.id) || course;
+                              const updatedModule = (updatedCourse.modules || []).find((m: any) => m.id === module.id) || null;
+                              if (updatedModule) {
+                                setActiveCourse(updatedCourse as any);
+                                setActiveModule(updatedModule as any);
+                                setActiveTab('home');
+                                return;
+                              }
+                            }
+                          } catch (e) {
+                            // fallback to in-memory expanded module if localStorage read fails
+                            const expandedModule = {
+                              ...module,
+                              cards: Array.from({ length: np }).map((_, i) => ({
+                                id: `${module.id}-pdf-${i+1}`,
+                                type: ("PDF_PAGE" as any),
+                                url: pdfUrl,
+                                pageNumber: i+1,
+                                bookmarked: false,
+                              }))
+                            } as any;
+                            setActiveCourse(course);
+                            setActiveModule(expandedModule as any);
+                            setActiveTab('home');
+                            return;
+                          }
+                        }
+                      } catch (e) {
                        // fallback to original
                      }
                    }

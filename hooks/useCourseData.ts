@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { Course, Card, TextCard } from '../types';
 import { CardType, ExamType } from '../types';
+import { getDocument } from 'pdfjs-dist';
 
 const longTextContent = `Welcome to The Art of Storytelling. This course will guide you through the fundamental principles of crafting compelling narratives. We'll explore character development, plot structure, and the power of emotional resonance.
 
@@ -188,11 +189,31 @@ MOCK_COURSES.push({
 });
 
 export const useCourseData = () => {
-  const [courses, setCourses] = useState<Course[]>(MOCK_COURSES);
+  const STORAGE_KEY = 'vl_courses_v1';
+  const loadFromStorage = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return MOCK_COURSES;
+      const parsed = JSON.parse(raw) as Course[];
+      return parsed;
+    } catch (e) {
+      return MOCK_COURSES;
+    }
+  };
+
+  const [courses, setCourses] = useState<Course[]>(() => loadFromStorage());
+
+  const saveToStorage = (next: Course[]) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch (e) {
+      // ignore storage errors
+    }
+  };
 
   const updateCardInCourse = useCallback((courseId: string, moduleId: string, updatedCard: Card) => {
-    setCourses(prevCourses =>
-      prevCourses.map(course => {
+    setCourses(prevCourses => {
+      const next = prevCourses.map(course => {
         if (course.id === courseId) {
           return {
             ...course,
@@ -210,9 +231,80 @@ export const useCourseData = () => {
           };
         }
         return course;
-      })
-    );
+      });
+      saveToStorage(next);
+      return next;
+    });
   }, []);
 
-  return { courses, updateCardInCourse };
+  const expandPdfModule = useCallback(async (courseId: string, moduleId: string, pdfUrl: string, options?: { maxPages?: number }) => {
+    const MAX_PAGES = options?.maxPages ?? 1000; // safety default
+    try {
+      const loadingTask = getDocument(pdfUrl);
+      const doc = await loadingTask.promise;
+      const np = doc.numPages || 0;
+      if (np <= 0) throw new Error('PDF has no pages');
+      if (np > MAX_PAGES) throw new Error(`PDF too large (${np} pages)`);
+
+      setCourses(prevCourses => {
+        const next = prevCourses.map(course => {
+          if (course.id !== courseId) return course;
+          return {
+            ...course,
+            modules: course.modules.map(module => {
+              if (module.id !== moduleId) return module;
+              const expandedCards: Card[] = Array.from({ length: np }).map((_, i) => ({
+                id: `${module.id}-pdf-${i + 1}`,
+                type: CardType.PdfPage,
+                url: pdfUrl,
+                pageNumber: i + 1,
+                bookmarked: false,
+              })) as any;
+
+              // Append a small quiz with two questions at the end of the PDF module
+              const examCards: Card[] = [
+                {
+                  id: `${module.id}-exam-1`,
+                  type: CardType.Exam,
+                  examType: ExamType.MultipleChoice,
+                  question: '¿Cuál es el objetivo principal del documento revisado?',
+                  options: ['Enseñar React desde cero', 'Describir conceptos de marketing', 'Explicar patrones de diseño'],
+                  correctAnswer: 'Enseñar React desde cero',
+                  bookmarked: false,
+                } as any,
+                {
+                  id: `${module.id}-exam-2`,
+                  type: CardType.Exam,
+                  examType: ExamType.TrueFalse,
+                  question: 'El PDF cubre temas avanzados de desarrollo web. (Verdadero/Falso)',
+                  correctAnswer: true,
+                  bookmarked: false,
+                } as any,
+              ];
+              // Welcome card shown as first slide
+              const welcomeCard: Card = {
+                id: `${module.id}-welcome`,
+                type: CardType.Text,
+                content: 'Bienvenido al curso de React desde cero\n\nDesliza para avanzar',
+                bookmarked: false,
+              } as any;
+
+              const finalCards = [welcomeCard, ...expandedCards, ...examCards];
+              return {
+                ...module,
+                cards: finalCards,
+              };
+            }),
+          };
+        });
+        saveToStorage(next);
+        return next;
+      });
+      return np;
+    } catch (err) {
+      throw err;
+    }
+  }, []);
+
+  return { courses, updateCardInCourse, expandPdfModule };
 };
