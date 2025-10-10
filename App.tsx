@@ -75,7 +75,11 @@ const App: React.FC = () => {
                   course={activeCourse} 
                   module={activeModule} 
                   onUpdateCard={handleUpdateCard}
-                  onGoBack={() => setActiveTab('courses')}
+                  onGoBack={() => {
+                    setActiveCourse(null);
+                    setActiveModule(null);
+                    setActiveTab('courses');
+                  }}
                 />;
       case 'courses':
         return <MyCoursesScreen 
@@ -137,12 +141,25 @@ const App: React.FC = () => {
     }
   };
 
+  // Determinar si estamos visualizando un curso
+  const isViewingCourse = activeTab === 'home' && activeCourse && activeModule;
+
+  // Manejar el cambio de pestaña
+  const handleTabChange = (tab: Tab) => {
+    if (tab === 'home' && (!activeCourse || !activeModule)) {
+      // Si no hay curso activo, ir a courses
+      setActiveTab('courses');
+    } else {
+      setActiveTab(tab);
+    }
+  };
+
   return (
     <div className="h-screen w-screen bg-black flex flex-col antialiased text-white overflow-hidden max-w-md mx-auto shadow-2xl">
       <main className="flex-1 relative min-h-0">
         {renderContent()}
       </main>
-      <BottomNavBar activeTab={activeTab} setActiveTab={setActiveTab} />
+      {!isViewingCourse && <BottomNavBar activeTab={activeTab} setActiveTab={handleTabChange} />}
     </div>
   );
 };

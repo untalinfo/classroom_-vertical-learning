@@ -11,7 +11,7 @@ import ImageCardComponent from './cards/ImageCard';
 import PdfPageCardComponent from './cards/PdfPageCard';
 import ExamCardComponent from './cards/ExamCard';
 import ProgressBar from './ProgressBar';
-import { BookmarkIcon, PencilIcon, XMarkIcon, ChevronLeftIcon } from './icons/Icons';
+import { BookmarkIcon, PencilIcon, XMarkIcon, ChevronLeftIcon, ChevronDownIcon } from './icons/Icons';
 
 interface CourseViewerProps {
   course: Course;
@@ -173,6 +173,19 @@ const CourseViewer: React.FC<CourseViewerProps> = ({ course, module, onUpdateCar
            <PencilIcon filled={!!activeCard?.note} />
         </button>
       </div>
+
+      {/* Next Button - Bottom Right */}
+      {activeIndex < module.cards.length - 1 && (
+        <div className="absolute bottom-4 right-4 z-10">
+          <button 
+            onClick={() => goTo(activeIndex + 1)}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full transition-colors duration-200 shadow-lg"
+          >
+            <span className="text-sm font-medium">Siguiente</span>
+            <ChevronDownIcon />
+          </button>
+        </div>
+      )}
 
       {/* Note Editor Modal */}
       {isNoteEditorOpen && (
